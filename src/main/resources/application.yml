@@ -1,0 +1,15 @@
+spring:
+  # Web Template Engine
+  thymeleaf:
+    suffix: .html
+    encoding: UTF-8
+    cache: false
+    check-template: true
+    check-template-location: true
+    mode: HTML
+
+  # upload multipart config
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
