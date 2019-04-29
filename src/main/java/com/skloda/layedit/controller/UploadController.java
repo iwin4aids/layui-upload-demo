@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @Author: jiangkun
@@ -19,6 +20,10 @@ import java.io.FileOutputStream;
 @Controller
 public class UploadController {
 
+    private static final String NGINX_ATTACH_PREFIX_URL = "http://localhost/attachments/";
+    private static final String NGINX_IMAGES_PREFIX_URL = "http://localhost/images/";
+    private static final String NGINX_DOC_ROOT = "/Users/jiangkun/upload/";
+
     //处理文件上传
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
     @ResponseBody
@@ -27,26 +32,31 @@ public class UploadController {
         String fileName = file.getOriginalFilename();  //图片名字
         System.out.println(contentType + "," + fileName);
         //文件存放路径
-        String filePath = "/Users/jiangkun/upload/";
-
-        //调用文件处理类FileUtil，处理文件，将文件写入指定位置
+        String newFilePath = NGINX_DOC_ROOT + (contentType.startsWith("image") ? "images/" : "attachments/");
         try {
-            uploadFile(file.getBytes(), filePath, fileName);
+            String newFileName = UUID.randomUUID().toString() + fileName.substring(fileName.lastIndexOf('.'));
+            uploadFile(file, newFilePath, newFileName);
+            return Msg.success(contentType.startsWith("image") ? NGINX_IMAGES_PREFIX_URL + newFileName : NGINX_ATTACH_PREFIX_URL + newFileName, fileName);
         } catch (Exception e) {
             e.printStackTrace();
+            return Msg.fail();
         }
-        // 返回图片的存放路径
-        return Msg.success(fileName);
     }
 
-    public void uploadFile(byte[] file, String filePath, String fileName) throws Exception {
-        File targetFile = new File(filePath);
-        if (!targetFile.exists()) {
-            targetFile.mkdirs();
+    private void uploadFile(MultipartFile file, String targetDir, String targetFileName) {
+        File dir = new File(targetDir);
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
-        FileOutputStream out = new FileOutputStream(filePath + fileName);
-        out.write(file);
-        out.flush();
-        out.close();
+        try (BufferedInputStream bis = new BufferedInputStream(file.getInputStream());
+             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(targetDir + File.separator + targetFileName))) {
+            byte[] bytes = new byte[1024];
+            int length;
+            while ((length = bis.read(bytes)) != -1) {
+                bos.write(bytes, 0, length);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

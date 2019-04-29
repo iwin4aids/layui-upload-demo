@@ -7,9 +7,14 @@ package com.skloda.layedit.controller;
  */
 public class Msg {
 
-    public static Msg success(String name) {
-        Data data = new Data("http://www.alilabel.com/wp-content/uploads/2017/05/bounding-box.png", name);
-        return new Msg(0, "成功", data);
+    public static Msg success(String url, String name) {
+        Data data = new Data(url, name);
+        return new Msg(0, "上传成功", data);
+    }
+
+
+    public static Msg fail() {
+        return new Msg(99, "上传失败", new Data());
     }
 
     private int code;
@@ -50,6 +55,9 @@ public class Msg {
 
         String src;
         String title;
+
+        public Data() {
+        }
 
         public Data(String src, String title) {
             this.src = src;
